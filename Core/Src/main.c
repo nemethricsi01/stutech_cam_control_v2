@@ -51,8 +51,8 @@ UART_HandleTypeDef huart1;
 					const uint8_t cam2preset[7] = {0x81,0x01,0x04,0x3f,0x02,0x01,0xFF};//camera mem recall 02
 					const uint8_t cam3preset[7] = {0x81,0x01,0x04,0x3f,0x02,0x02,0xFF};//camera mem recall 03
 					const uint8_t cam4preset[7] = {0x81,0x01,0x04,0x3f,0x02,0x03,0xFF};//camera mem recall 04
-//					const uint8_t autotrackon[7] = {0x81,0x01,0x0B,0x00,0x00,0x02,0xFF};//auto tracking on
-//					const uint8_t autotrackoff[7] = {0x81,0x01,0x0B,0x00,0x00,0x03,0xFF};//auto tracking off
+					const uint8_t autotrackon[7] = {0x81,0x01,0x0B,0x00,0x00,0x02,0xFF};//auto tracking on
+					const uint8_t autotrackoff[7] = {0x81,0x01,0x0B,0x00,0x00,0x03,0xFF};//auto tracking off
 					const uint8_t powerinquiry[5] = {0x81,0x09,0x04,0x00,0xFF};//camera mem recall 04
 					int actgomb[5];
 					int lastgomb[5];
@@ -67,6 +67,7 @@ UART_HandleTypeDef huart1;
 					uint8_t villtimer = 0;
 					int gomb0hosszutime,gomb4hosszutime = 0;
 					int pwrtime = 0;
+					uint8_t firston = 1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -151,10 +152,17 @@ int main(void)
 							if((poweronflag == 1)&&(villtimer == 0))
 							{
 								HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
+								if(firston == 1)
+								{
+									HAL_UART_Transmit(&huart1,autotrackon,7,100);
+									firston = 0;
+								}
+
 							}
 							if((poweroffflag == 1)&&(villtimer == 0))
 							{
 							HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
+							firston = 1;
 							}
 
 
@@ -198,25 +206,26 @@ int main(void)
 										}
 											if(lastgomb[0] == 0)//gomb1
 											{
-												HAL_UART_Transmit(&huart1,cam1preset,7,100);
+												HAL_UART_Transmit(&huart1,autotrackoff,7,100);
+												HAL_UART_Transmit(&huart1,cam2preset,7,100);
 												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
 												villtimer = 200;
 											}
 											if(lastgomb[1] == 0)//gomb2
 											{
-												HAL_UART_Transmit(&huart1,cam2preset,7,100);
+												HAL_UART_Transmit(&huart1,cam3preset,7,100);
 												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
 												villtimer = 200;
 											}
 											if(lastgomb[2] == 0)//gomb3
 											{
-												HAL_UART_Transmit(&huart1,cam3preset,7,100);
+												HAL_UART_Transmit(&huart1,cam4preset,7,100);
 												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
 												villtimer = 200;
 											}
 											if(lastgomb[3] == 0)//gomb4
 											{
-												HAL_UART_Transmit(&huart1,cam4preset,7,100);
+												HAL_UART_Transmit(&huart1,autotrackon,7,100);
 												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
 												villtimer = 200;
 											}
