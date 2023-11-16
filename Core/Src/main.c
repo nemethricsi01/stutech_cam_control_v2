@@ -46,7 +46,7 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 					const uint8_t pwron[6] =	{0x81,0x01,0x04,0x00,0x02,0xFF};//camera power on
-					const uint8_t pwroff[6] = {0x81,0x01,0x04,0x00,0x03,0xFF};//camera power off
+					const uint8_t pwroff[6] = 		{0x81,0x01,0x04,0x00,0x03,0xFF};//camera power off
 					const uint8_t cam1preset[7] = {0x81,0x01,0x04,0x3f,0x02,0x00,0xFF};//camera mem recall 01
 					const uint8_t cam2preset[7] = {0x81,0x01,0x04,0x3f,0x02,0x01,0xFF};//camera mem recall 02
 					const uint8_t cam3preset[7] = {0x81,0x01,0x04,0x3f,0x02,0x02,0xFF};//camera mem recall 03
@@ -60,12 +60,12 @@ UART_HandleTypeDef huart1;
 					int prelltimer = 0;
 					uint8_t gomb0prell;
 					uint8_t gomb3prell;
-					uint8_t uartbuff[20];
+					uint8_t uartbuff[100];
 					uint8_t uartbuf;
 					uint8_t uartcount= 0;
-					uint8_t ackflag,cpltflag,poweronflag,poweroffflag = 0;
+					uint8_t ackflag = 0,cpltflag = 0,poweronflag = 0,poweroffflag = 0;
 					uint8_t villtimer = 0;
-					int gomb0hosszutime,gomb4hosszutime = 0;
+					int gomb0hosszutime = 0,gomb4hosszutime = 0;
 					int pwrtime = 0;
 					uint8_t firston = 1;
 /* USER CODE END PV */
@@ -122,118 +122,137 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
-						HAL_TIM_Base_Start_IT(&htim17);
-						HAL_UART_Receive_IT(&huart1,&uartbuf,1);
-						readgomb();
-						lastgomb[0] = actgomb[0];
-						lastgomb[1] = actgomb[1];
-						lastgomb[2] = actgomb[2];
-						lastgomb[3] = actgomb[3];
-						lastgomb[4] = actgomb[4];
+	HAL_TIM_Base_Start_IT(&htim17);
+	HAL_UART_Receive_IT(&huart1,&uartbuf,1);
+	readgomb();
+	lastgomb[0] = actgomb[0];
+	lastgomb[1] = actgomb[1];
+	lastgomb[2] = actgomb[2];
+	lastgomb[3] = actgomb[3];
+	lastgomb[4] = actgomb[4];
 
-						//bekapcs villogas
-						HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
-						HAL_Delay(200);
-						HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
-						HAL_Delay(200);
-						HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
-						HAL_Delay(200);
-						HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
-						HAL_Delay(200);
-						HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
-						HAL_Delay(200);
-						HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
+	//bekapcs villogas
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
+	HAL_Delay(200);
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
+	HAL_Delay(200);
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
+	HAL_Delay(200);
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
+	HAL_Delay(200);
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
+	HAL_Delay(200);
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-						while (1)
-						{
-							if((poweronflag == 1)&&(villtimer == 0))
-							{
-								HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
-								if(firston == 1)
-								{
-									HAL_UART_Transmit(&huart1,autotrackon,7,100);
-									firston = 0;
-								}
+while (1)
+{
+	if((poweronflag == 1)&&(villtimer == 0))
+	{
+		HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);
+		if(firston == 1)
+		{
+			HAL_TIM_Base_Stop_IT(&htim17);
+			HAL_UART_Transmit(&huart1,autotrackon,7,100);
+			HAL_TIM_Base_Start_IT(&htim17);
+			firston = 0;
+		}
 
-							}
-							if((poweroffflag == 1)&&(villtimer == 0))
-							{
-							HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
-							firston = 1;
-							}
+	}
+	if((poweroffflag == 1)&&(villtimer == 0))
+	{
+	HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);
+	firston = 1;
+	}
 
 
-							readgomb();
-							if((lastgomb[0] != actgomb[0])||
-								 (lastgomb[1] != actgomb[1])||
-								 (lastgomb[2] != actgomb[2])||
-								 (lastgomb[3] != actgomb[3])||
-								 (lastgomb[4] != actgomb[4]))
-									{
-										prelltimer = prelltime;
-										while(prelltimer >0)
-										{
-											readgomb();
-											if(lastgomb[0] != actgomb[0])
-											{
-												prelltimer = prelltime;
-												lastgomb[0] = actgomb[0];
-											}
-											if(lastgomb[1] != actgomb[1])
-											{
-												prelltimer = prelltime;
-												lastgomb[1] = actgomb[1];
-											}
-											if(lastgomb[2] != actgomb[2])
-											{
-												prelltimer = prelltime;
-												lastgomb[2] = actgomb[2];
-											}
-											if(lastgomb[3] != actgomb[3])
-											{
-												prelltimer = prelltime;
-												lastgomb[3] = actgomb[3];
-											}
-											if(lastgomb[4] != actgomb[4])
-											{
-												prelltimer = prelltime;
-												lastgomb[4] = actgomb[4];
-											}
+	readgomb();
+	if((lastgomb[0] != actgomb[0])||
+		 (lastgomb[1] != actgomb[1])||
+		 (lastgomb[2] != actgomb[2])||
+		 (lastgomb[3] != actgomb[3])||
+		 (lastgomb[4] != actgomb[4]))
+			{
+				prelltimer = prelltime;
+				while(prelltimer >0)
+				{
+					readgomb();
+					if(lastgomb[0] != actgomb[0])
+					{
+						prelltimer = prelltime;
+						lastgomb[0] = actgomb[0];
+					}
+					if(lastgomb[1] != actgomb[1])
+					{
+						prelltimer = prelltime;
+						lastgomb[1] = actgomb[1];
+					}
+					if(lastgomb[2] != actgomb[2])
+					{
+						prelltimer = prelltime;
+						lastgomb[2] = actgomb[2];
+					}
+					if(lastgomb[3] != actgomb[3])
+					{
+						prelltimer = prelltime;
+						lastgomb[3] = actgomb[3];
+					}
+					if(lastgomb[4] != actgomb[4])
+					{
+						prelltimer = prelltime;
+						lastgomb[4] = actgomb[4];
+					}
 
-										}
-											if(lastgomb[0] == 0)//gomb1
-											{
-												HAL_UART_Transmit(&huart1,autotrackoff,7,100);
-												HAL_UART_Transmit(&huart1,cam2preset,7,100);
-												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-												villtimer = 200;
-											}
-											if(lastgomb[1] == 0)//gomb2
-											{
-												HAL_UART_Transmit(&huart1,cam3preset,7,100);
-												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-												villtimer = 200;
-											}
-											if(lastgomb[2] == 0)//gomb3
-											{
-												HAL_UART_Transmit(&huart1,cam4preset,7,100);
-												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-												villtimer = 200;
-											}
-											if(lastgomb[3] == 0)//gomb4
-											{
-												HAL_UART_Transmit(&huart1,autotrackon,7,100);
-												HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-												villtimer = 200;
-											}
-											if(lastgomb[4] == 0)//powergomb
-											{
+				}
+					if(lastgomb[0] == 0)//gomb1
+					{
+						HAL_TIM_Base_Stop_IT(&htim17);
+						HAL_UART_Transmit(&huart1,autotrackoff,7,100);
+						HAL_Delay(50);
+						HAL_UART_Transmit(&huart1,cam2preset,7,100);
+						HAL_Delay(30);
+						HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+						HAL_TIM_Base_Start_IT(&htim17);
+						villtimer = 200;
+					}
+					if(lastgomb[1] == 0)//gomb2
+					{
+						HAL_TIM_Base_Stop_IT(&htim17);
+						HAL_UART_Transmit(&huart1,autotrackoff,7,100);
+						HAL_Delay(50);
+						HAL_UART_Transmit(&huart1,cam3preset,7,100);
+						HAL_Delay(30);
+						HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+						HAL_TIM_Base_Start_IT(&htim17);
+						villtimer = 200;
+					}
+					if(lastgomb[2] == 0)//gomb3
+					{
+						HAL_TIM_Base_Stop_IT(&htim17);
+						HAL_UART_Transmit(&huart1,autotrackoff,7,100);
+						HAL_Delay(50);
+						HAL_UART_Transmit(&huart1,cam4preset,7,100);
+						HAL_Delay(30);
+						HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+						HAL_TIM_Base_Start_IT(&htim17);
+						villtimer = 200;
+					}
+					if(lastgomb[3] == 0)//gomb4
+					{
+						HAL_TIM_Base_Stop_IT(&htim17);
+						HAL_UART_Transmit(&huart1,autotrackon,7,100);
+						HAL_Delay(30);
+						HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+						HAL_TIM_Base_Start_IT(&htim17);
+						villtimer = 200;
+					}
+					if(lastgomb[4] == 0)//powergomb
+					{
 
-											}
-									}
+					}
+			}
 
     /* USER CODE END WHILE */
 
@@ -392,145 +411,144 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-					void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-					{
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
 
-					if(prelltimer >0)
-					{
-						prelltimer--;
-					}
-					if(villtimer >0)
-					{
-						villtimer--;
-						if(poweronflag == 1)
-						{
-							HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);//led off
-							if(villtimer == 0)
-							{
-								HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);//led on
-							}
-						}
-						if(poweroffflag == 1)
-						{
-							HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);//led on
-							if(villtimer == 0)
-							{
-								HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);//led off
-							}
-						}
-					}
-					if(actgomb[0] == 0)
-					{
-						gomb0hosszutime++;
-						if(gomb0hosszutime > 3000)
-						{
-							HAL_UART_Transmit(&huart1,pwron,6,100);
-							pwrtime = 100;
-							poweronflag = 1;
-							poweroffflag = 0;
-							gomb0hosszutime = 0;
-							HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-						}
-						else if(actgomb[0] == 1)
-						{
-							gomb0hosszutime = 0;
-						}
-					}
+	if(prelltimer >0)
+	{
+		prelltimer--;
+	}
+	if(villtimer >0)
+	{
+		villtimer--;
+		if(poweronflag == 1)
+		{
+			HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);//led off
+			if(villtimer == 0)
+			{
+				HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);//led on
+			}
+		}
+		if(poweroffflag == 1)
+		{
+			HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_SET);//led on
+			if(villtimer == 0)
+			{
+				HAL_GPIO_WritePin(PWR_LED_GPIO_Port,PWR_LED_Pin,GPIO_PIN_RESET);//led off
+			}
+		}
+	}
+	if(actgomb[0] == 0)
+	{
+		gomb0hosszutime++;
+		if(gomb0hosszutime > 3000)
+		{
+			HAL_TIM_Base_Stop_IT(&htim17);
+			HAL_UART_Transmit(&huart1,pwron,6,100);
+			pwrtime = 100;
+			poweronflag = 1;
+			poweroffflag = 0;
+			gomb0hosszutime = 0;
+			HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+			HAL_TIM_Base_Start_IT(&htim17);
+		}
 
-					if(actgomb[0] == 1)
-					{
-						if(gomb0hosszutime >0)
-						{
-							gomb0prell++;
-						}
-						if(gomb0prell >50)
-						{
-							gomb0hosszutime = 0;
-							gomb0prell = 0;
-						}
+	}
 
-					}
-					if(actgomb[3] == 0)
-					{
-						gomb4hosszutime++;
-						if(gomb4hosszutime > 3000)
-						{
-							HAL_UART_Transmit(&huart1,pwroff,6,100);
-							pwrtime = 300;
-							poweronflag = 0;
-							poweroffflag = 1;
-							gomb4hosszutime = 0;
-							HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-						}
-						else if(actgomb[3] == 1)
-						{
-							gomb4hosszutime = 0;
-						}
-					}
-					if(actgomb[3] == 1)
-					{
-							if(gomb4hosszutime >0)
-						{
-							gomb3prell++;
-						}
-						if(gomb3prell >50)
-						{
-							gomb4hosszutime = 0;
-							gomb3prell = 0;
-						}
-					}
+	if(actgomb[0] == 1)
+	{
+		if(gomb0hosszutime >0)
+		{
+			gomb0prell++;
+		}
+		if(gomb0prell >50)
+		{
+			gomb0hosszutime = 0;
+			gomb0prell = 0;
+		}
 
-					if(pwrtime >0)
-					{
-						pwrtime--;
-						if((pwrtime == 0)||(pwrtime == 99)||(pwrtime == 150)||(pwrtime == 250))
-						{
-							HAL_UART_Transmit(&huart1,powerinquiry,5,100);
-						}
-					}
+	}
+	if(actgomb[3] == 0)
+	{
+		gomb4hosszutime++;
+		if(gomb4hosszutime > 3000)
+		{
+			HAL_TIM_Base_Stop_IT(&htim17);
+			HAL_UART_Transmit(&huart1,pwroff,6,100);
+			pwrtime = 300;
+			poweronflag = 0;
+			poweroffflag = 1;
+			gomb4hosszutime = 0;
+			HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+			HAL_TIM_Base_Start_IT(&htim17);
+		}
+	}
+	if(actgomb[3] == 1)
+	{
+			if(gomb4hosszutime >0)
+		{
+			gomb3prell++;
+		}
+		if(gomb3prell >50)
+		{
+			gomb4hosszutime = 0;
+			gomb3prell = 0;
+		}
+	}
 
-					}
+	if(pwrtime >0)
+	{
+		pwrtime--;
+		if((pwrtime == 0)||(pwrtime == 99)||(pwrtime == 150)||(pwrtime == 250))
+		{
+			HAL_TIM_Base_Stop_IT(&htim17);
+			HAL_UART_Transmit(&huart1,powerinquiry,5,100);
+			HAL_TIM_Base_Start_IT(&htim17);
+		}
+	}
 
-					void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-					{
-						uartbuff[uartcount] = uartbuf;
-						uartcount++;
-						if(uartcount > 5)
-						{
-							uartcount = 0;
-							memset(uartbuff,0,10);
-						}
+}
 
-						if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x41)&&(uartbuff[2] == 0xFF))
-						{
-							villtimer = 200;
-							uartcount = 0;
-							ackflag = 1;
-							memset(uartbuff,0,10);
-						}else if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x51)&&(uartbuff[2] == 0xFF))
-						{
-							villtimer = 200;
-							uartcount = 0;
-							cpltflag = 1;
-							memset(uartbuff,0,10);
-						}
-						else if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x50)&&(uartbuff[2] == 0x02)&&(uartbuff[3] == 0xFF))//pwr on
-						{
-							villtimer = 200;
-							uartcount = 0;
-							poweronflag = 1;
-							poweroffflag = 0;
-							memset(uartbuff,0,10);
-						}else if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x50)&&(uartbuff[2] == 0x03)&&(uartbuff[3] == 0xFF))//pwr off
-						{
-							villtimer = 200;
-							uartcount = 0;
-							poweroffflag = 1;
-							poweronflag = 0;
-							memset(uartbuff,0,10);
-						}
-						HAL_UART_Receive_IT(&huart1,&uartbuf,1);
-					}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	uartbuff[uartcount] = uartbuf;
+	uartcount++;
+	if(uartcount > 5)
+	{
+		uartcount = 0;
+		memset(uartbuff,0,10);
+	}
+
+	if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x41)&&(uartbuff[2] == 0xFF))
+	{
+		villtimer = 200;
+		uartcount = 0;
+		ackflag = 1;
+		memset(uartbuff,0,10);
+	}else if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x51)&&(uartbuff[2] == 0xFF))
+	{
+		villtimer = 200;
+		uartcount = 0;
+		cpltflag = 1;
+		memset(uartbuff,0,10);
+	}
+	else if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x50)&&(uartbuff[2] == 0x02)&&(uartbuff[3] == 0xFF))//pwr on
+	{
+		villtimer = 200;
+		uartcount = 0;
+		poweronflag = 1;
+		poweroffflag = 0;
+		memset(uartbuff,0,10);
+	}else if((uartbuff[0] == 0x90)&&(uartbuff[1] == 0x50)&&(uartbuff[2] == 0x03)&&(uartbuff[3] == 0xFF))//pwr off
+	{
+		villtimer = 200;
+		uartcount = 0;
+		poweroffflag = 1;
+		poweronflag = 0;
+		memset(uartbuff,0,10);
+	}
+	HAL_UART_Receive_IT(&huart1,&uartbuf,1);
+}
 /* USER CODE END 4 */
 
 /**

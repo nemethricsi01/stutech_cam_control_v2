@@ -57,12 +57,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BUTT_4_Pin GPIO_PIN_5
-#define BUTT_4_GPIO_Port GPIOA
+#define BUTT_2_Pin GPIO_PIN_5
+#define BUTT_2_GPIO_Port GPIOA
 #define BUTT_3_Pin GPIO_PIN_6
 #define BUTT_3_GPIO_Port GPIOA
-#define BUTT_2_Pin GPIO_PIN_7
-#define BUTT_2_GPIO_Port GPIOA
+#define BUTT_4_Pin GPIO_PIN_7
+#define BUTT_4_GPIO_Port GPIOA
 #define BUTT_1_Pin GPIO_PIN_1
 #define BUTT_1_GPIO_Port GPIOB
 #define BUTT_GEN_Pin GPIO_PIN_9
